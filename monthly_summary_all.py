@@ -2,25 +2,34 @@
 import pandas as pd
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data" / "processed"
+
 files = sorted(
-    Path("data/processed").glob(
-        "service_day_trips_2025-??.parquet"
-    )
+    DATA_DIR.glob("service_day_trips_2025-??.parquet")
 )
 
 print("Monthly files found:", len(files))
+
+if len(files) != 12:
+    print("Warning: Expected 12 monthly files!")
 
 monthly_results = []
 
 for file in files:
 
-    month = file.stem.replace(
-        "service_day_trips_", ""
-    )
+    month = file.stem.replace("service_day_trips_", "")
 
     print("Analyzing:", month)
 
-    df = pd.read_parquet(file)
+    df = pd.read_parquet(
+        file,
+        columns=[
+            "total_amount",
+            "fare_amount",
+            "trip_distance"
+        ]
+    )
 
     summary = {
         "month": month,
@@ -37,12 +46,12 @@ for file in files:
 
 result = pd.DataFrame(monthly_results)
 
-result.to_csv(
-    "data/processed/monthly_summary_2025.csv",
-    index=False
-)
+output_file = DATA_DIR / "monthly_summary_2025.csv"
+
+result.to_csv(output_file, index=False)
 
 print("\n--- 2025 MONTHLY SUMMARY ---")
 print(result.to_string(index=False))
 
 print("\nMonthly Summary Completed!")
+print("CSV Saved at:", output_file)
